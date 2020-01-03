@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.dao.ProductDao">
+    <resultMap type="com.ssm.entity.Product" id="productMap">
+        <id column="product_id" property="productId"/>
+        <result column="product_name" property="productName"/>
+        <result column="product_desc" property="productDesc"/>
+        <result column="img_addr" property="imgAddr"/>
+        <result column="normal_price" property="normalPrice"/>
+        <result column="promotion_price" property="promotionPrice"/>
+        <result column="priority" property="priority"/>
+        <result column="enable_status" property="enableStatus"/>
+        <association property="productCategory" column="product_category_id" javaType="com.ssm.entity.ProductCategory">
+            <id column="product_category_id" property="productCategoryId"/>
+            <result column="product_category_name" property="productCategoryName"/>
+        </association>
+    </resultMap>
+    <insert id="insertProduct" parameterType="com.ssm.entity.Product" useGeneratedKeys="true"
+            keyProperty="productId" keyColumn="product_id">
+        INSERT INTO
+        tb_product(product_name,product_desc,img_addr,
+        normal_price,promotion_price,priority,create_time,
+        last_edit_time,enable_status,product_category_id,
+        shop_id)
+        VALUES
+        (#{productName},#{productDesc},#{imgAddr},
+        #{normalPrice},#{promotionPrice},#{priority},#{createTime},
+        #{lastEditTime},#{enableStatus},#{productCategory.productCategoryId},
+        #{shop.shopId})
+    </insert>
+    <select id="queryProductById" resultMap="productMap" parameterType="long">
+        SELECT
+        p.product_id,
+        p.product_name,
+        p.product_desc,
+        p.img_addr,
+        p.normal_price,
+        p.promotion_price,
+        p.priority,
+        pc.product_category_id,
+        pc.product_category_name
+        FROM
+        tb_product p
+        JOIN
+        tb_product_category pc
+        ON p.product_category_id = pc.product_category_id
+        WHERE
+        p.product_id = #{productId}
+    </select>
+    <update id="updateProduct" parameterType="com.ssm.entity.Product">
+        update tb_product
+        <set>
+            <if test="productName != null">product_name=#{productName},</if>
+            <if test="productDesc != null">product_desc=#{productDesc},</if>
+            <if test="imgAddr != null">img_addr=#{imgAddr},</if>
+            <if test="normalPrice != null">normal_price=#{normalPrice},</if>
+            <if test="promotionPrice != null">promotion_price=#{promotionPrice},</if>
+            <if test="priority != null">priority=#{priority},</if>
+            <if test="lastEditTime != null">last_edit_time=#{lastEditTime},</if>
+            <if test="enableStatus != null">enable_status=#{enableStatus},</if>
+            <if test="productCategory != null">product_category_id=#{productCategory.productCategoryId}</if>
+        </set>
+        where product_id=#{productId}
+    </update>
+    <select id="queryProductList" resultMap="productMap">
+        SELECT
+        p.product_id,
+        p.product_name,
+        p.product_desc,
+        p.img_addr,
+        p.normal_price,
+        p.promotion_price,
+        p.priority,
+        p.enable_status,
+        pc.product_category_id,
+        pc.product_category_name
+        FROM
+        tb_product p,
+        tb_product_category pc
+        <where>
+            <if test="productCondition.productCategory !=null and
+            productCondition.productCategory.productCategoryId !=null">
+                and pc.product_category_id = #{productCondition.productCategory.productCategoryId}
+            </if>
+            <if test="productCondition.productName !=null">
+                and p.product_name like '%${productCondition.productName}%'
+            </if>
+            <if test="productCondition.enableStatus !=null">
+                and p.enable_status = #{productCondition.enableStatus}
+            </if>
+            <if test="productCondition.shop !=null and
+            productCondition.shop.shopId !=null">
+                and p.shop_id = #{productCondition.shop.shopId}
+            </if>
+            AND
+            p.product_category_id = pc.product_category_id
+        </where>
+        ORDER BY
+        p.priority DESC
+        LIMIT #{rowIndex},#{pageSize};
+    </select>
+    <select id="queryProductCount" resultType="int">
+        SELECT
+        count(1)
+        FROM
+        tb_product p,
+        tb_product_category pc
+        <where>
+            <if test="productCondition.productCategory !=null and
+            productCondition.productCategory.productCategoryId !=null">
+                and pc.product_category_id = #{productCondition.productCategory.productCategoryId}
+            </if>
+            <if test="productCondition.productName !=null">
+                and p.product_name like '%${productCondition.productName}%'
+            </if>
+            <if test="productCondition.enableStatus !=null">
+                and p.enable_status = #{productCondition.enableStatus}
+            </if>
+            <if test="productCondition.shop !=null and
+            productCondition.shop.shopId !=null">
+                and p.shop_id = #{productCondition.shop.shopId}
+            </if>
+            AND
+            p.product_category_id = pc.product_category_id
+        </where>
+    </select>
+    <update id="updateProductCategoryToNull" parameterType="long">
+        UPDATE
+        tb_product
+        SET
+        product_category_id = null
+        WHERE product_category_id =
+        #{productCategoryId}
+    </update>
+</mapper>
+
